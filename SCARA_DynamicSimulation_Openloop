@@ -1,0 +1,206 @@
+Dynamic Simulation of SCARA Manipulator (open-loop)
+
+
+%% Dynamic simulation of SCARa robot
+clear all; close all; clc;
+%% Simulation parameter
+dt = 0.1; %stepsize
+ts = 5; %total simulation time
+t = 0:dt:ts; %time span
+
+%% System parameters
+% m0 = 2.062E+05; m1 = 27432.858; m2 =1.739E+05; m3 =18545.45; %link masses
+m0 = 1; m1=1; m2=1; m3 = 1;
+
+%Link lengths
+
+% d1=0.15;
+% d2=0.05;
+% d4=0.2;
+% a1=0.15;
+% a2=0.15;
+
+syms d3
+
+d1=0.5;
+d2=0.05;
+d4=0.1;
+a1=0.45;
+a2=0.62; 
+
+b1=0.5; b2=00.5; b3=1;
+c1 =1; c2 = 1; c3 = 2;
+g = 9.81 %gravity
+
+% IC0_11 = 3.6; IC0_12 = 0; IC0_13 = -0.374;
+% IC0_21 = 0; IC0_22 = 3.6; IC0_23 = 0;
+% IC0_31 = -0.374; IC0_32 = 0; IC0_33 = 2.4;
+% 
+% IC1_11 = 5.5; IC1_12 = -2.14; IC1_13 = -2.6;
+% IC1_21 = -2.14; IC1_22 = 6.6; IC1_23 = 2.73;
+% IC1_31 = -2.6; IC1_32 = 2.73;  IC1_33 = 7.0;
+%    
+% IC2_11 = 1.4; IC2_12 = 2.4; IC2_13 = -3.32;
+% IC2_21 = 2.4; IC2_22 = 5.1; IC2_23 = 3.5;
+% IC2_31 = -3.32; IC2_32 = 3.5; IC2_33 = 5.6;
+% 
+% IC3_11 = 3.48; IC3_12 = 0; IC3_31 = 0;
+% IC3_21 = 0; IC3_22 = 3.48; IC3_23 = 0;
+% IC3_31 = 0; IC3_32 = 0; IC3_33 = 1.4;
+
+%Inertia matrix
+% IC0_11 = 3.640E+09; IC0_12 = 0; IC0_13 = -0.374;
+% IC0_21 = 0; IC0_22 = 3.640E+09; IC0_23 = 0;
+% IC0_31 = -0.374; IC0_32 = 0; IC0_33 = 2.488E+09;
+% 
+% IC1_11 = 5.521E+07; IC1_12 = -214.772; IC1_13 = -2.608E+07;
+% IC1_21 = -214.772; IC1_22 = 6.691E+08; IC1_23 = 27.365;
+% IC1_31 = -2.608E+07; IC1_32 = 27.365;  IC1_33 = 7.040E+08;
+%    
+% IC2_11 = 1.446E+09; IC2_12 = 2.438E+05; IC2_13 = -3.325E+08;
+% IC2_21 = 2.438E+05; IC2_22 = 5.189E+09; IC2_23 = 35319.925;
+% IC2_31 = -3.325E+08; IC2_32 = 35319.925; IC2_33 = 5.688E+09;
+% 
+% IC3_11 = 3.488E+08; IC3_12 = 0; IC3_31 = 0;
+% IC3_21 = 0; IC3_22 = 3.488E+08; IC3_23 = 0;
+% IC3_31 = 0; IC3_32 = 0; IC3_33 = 1.484E+07;
+
+
+IC0_11 = 0; IC0_12 = 0; IC0_13 = 0;
+IC0_21 = 0; IC0_22 = 0; IC0_23 = 0;
+IC0_31 = 0; IC0_32 = 0; IC0_33 = 0;
+
+IC1_11 = 0; IC1_12 = 0; IC1_13 = 0;
+IC1_21 = 0; IC1_22 = 0; IC1_23 = 0;
+IC1_31 = 0; IC1_32 = 0; IC1_33 = 0;
+   
+IC2_11 = 0; IC2_12 = 0; IC2_13 = 0;
+IC2_21 = 0; IC2_22 = 0; IC2_23 = 0;
+IC2_31 = 0; IC2_32 = 0; IC2_33 = 0;
+
+IC3_11 = 0; IC3_12 = 0; IC3_31 = 0;
+IC3_21 = 0; IC3_22 = 0; IC3_23 = 0;
+IC3_31 = 0; IC3_32 = 0; IC3_33 = 0;
+
+
+PC0x = 0; PC0y = 0; PC0z = d1;
+PC1x = a1; PC1y = 0; PC1z = d2;
+PC2x = a2; PC2y = 0; PC1z = -d3;
+PC3x = 0; PC3y = 0; PC3z = d4;
+% 
+% PC0x = 0; PC0y = 0; PC0z = 135.774;
+% PC1x = 224.441; PC1y = 0; PC1z = 25.415;
+% PC2x = 210.376; PC2y = 0.015; PC1z = 78.37;
+% PC3x = 0; PC3y = 0; PC3z = 265.00;
+
+% PC0_0 = [0; 0.00; 135.774];
+% PC1_1 = [224.441; 0.00; 25.415];
+% PC2_2 = [210.376; 0.015; 78.37];
+% PC3_3 = [0; 0.00; 265.00];
+
+
+%% Initial conditions
+q = [0;0;0]; %initial joint positions
+qdot = [0.2;0.7;0.8]; %initial joint variables
+
+%% Numerical integration starts here
+for i=1:length(t)
+    th1 = q(1,i); th2 =q(2,i); d3 = q(3,i);
+    th1dot = qdot(1,i); th2dot =qdot(2,i); d3dot=qdot(3,i);
+
+    % inertia matrix
+    M= [IC2_33 - IC3_33 + PC1x^2*m1 + PC1y^2*m1 + PC2x^2*m2 + PC2y^2*m2 + PC3x^2*m3 + PC3y^2*m3 + a1^2*m2 + a1^2*m3 + a2^2*m3 + 2*PC3x*a2*m3 + 2*PC2x*a1*m2*cos(th2) + 2*PC3x*a1*m3*cos(th2) - 2*PC2y*a1*m2*sin(th2) + 2*PC3y*a1*m3*sin(th2) + 2*a1*a2*m3*cos(th2), m2*PC2x^2 + a1*m2*cos(th2)*PC2x + m2*PC2y^2 - a1*m2*sin(th2)*PC2y + m3*PC3x^2 + 2*m3*PC3x*a2 + a1*m3*cos(th2)*PC3x + m3*PC3y^2 + a1*m3*sin(th2)*PC3y + m3*a2^2 + a1*m3*cos(th2)*a2 - IC3_33,  0;
+                                                      m2*PC2x^2 + a1*m2*cos(th2)*PC2x + m2*PC2y^2 - a1*m2*sin(th2)*PC2y + m3*PC3x^2 + 2*m3*PC3x*a2 + a1*m3*cos(th2)*PC3x + m3*PC3y^2 + a1*m3*sin(th2)*PC3y + m3*a2^2 + a1*m3*cos(th2)*a2 + IC2_33 - IC3_33,                                                                                                             m2*PC2x^2 + m2*PC2y^2 + m3*PC3x^2 + 2*m3*PC3x*a2 + m3*PC3y^2 + m3*a2^2 - IC3_33,  0;
+                                                                                                                                                                                                                                                         0,                                                                                                                                                                                           0, m3;];
+    %GRavity matrix and Gravity effects
+    Gra = [0;0;-m3];
+    GE = Gra*g;
+    
+    %Frictional effects 
+    FE = [b1*th1dot+c1*sign(th1dot); b2*th2dot+c2*sign(th2dot); b3*d3dot+c3*sign(d3dot);];
+    
+    %Other effect matrix 
+    OE = [-a1*th2dot*(2*th1dot + th2dot)*(PC2x*m2*sin(th2) + PC3x*m3*sin(th2) + a2*m3*sin(th2) + PC2y*m2*cos(th2) - PC3y*m3*cos(th2));
+                   a1*th1dot^2*(PC2x*m2*sin(th2) + PC3x*m3*sin(th2) + a2*m3*sin(th2) + PC2y*m2*cos(th2) - PC3y*m3*cos(th2));
+                                                                                                                          0;];
+    %input vector
+    tau1=0; tau2=0; tau3=0;
+    tau(:,i)=[tau1;tau2;tau3]; 
+    
+    %acceleration vector
+    qddot(:,i)=inv(M)*(tau(:,i)-(GE+OE+FE));
+    
+    %velocity propogation
+    qdot(:,i+1) = qdot(:,i) + qddot(:,i)*dt
+
+    %position update
+    q(:,i+1) = q(:,i)+qdot(:,i)*dt + 1/2*qddot(:,i)*dt^2;
+
+end
+
+%numerical integration ends here
+
+
+%% Plotting functions
+plot(t,q(1,1:i),'r-.', t,q(2,1:i), 'b-', t,q(3,1:i), 'k-', 'linewidth',2)
+legend('\theta_1', '\theta_2', '\d3')
+grid on
+ll = min(min(q)); ul = max(max(q));
+axis([0 ts ll - 0.1 ul+0.1])
+set(gca, 'fontsize',20)
+xlabel('t,[s]')
+ylabel('q [units]')
+
+
+%% Animation
+for i =1:10:length(t)
+
+    
+%     x1=0; y1=0; z1=d1;
+%     
+%     x2 = a1*cos(q(1,i));
+%     y2 = a1*sin(q(1,i));
+%     z2 = d1+d2;
+%     
+%     x3 = a2*cos(q(1,i)+q(2,i)) + a1*cos(q(1,i));
+%     y3 = a2*sin(q(1,i)+q(2,i)) + a1*sin(q(1,i));
+%     z3 = d1+d2 - q(3,i);
+%     
+%     x4 = a2*cos(q(1,i) + q(2,i)) + a1*cos(q(1,i));
+%     y4 = a2*sin(q(2,i) + q(2,i)) + a1*sin(q(1,i));
+%     z4 = d1+d2-q(3,i)-d4;
+%     
+%     plot3([0,x1,x2,x3,x4],[0,y1,y2,y3,y4],[0,z1,z2,z3,z4],'linewidth',3)
+%     grid on, set(gca,'fontsize',20)
+%     axis([-(a1+a2)-0.1,(a1+a2)+0.1,-(a1+a2)-0.1,(a1+a2)+0.1,-1,(d1+d2)+10])
+%     hold off, pause(1)
+
+
+    x0 = 0; y0 = 0; z0 = 0;
+
+    x1 = x0; y1 = y0; z1 = z0 + d1;
+
+    x2 = x1 + a1*cos(q(1,i)); y2 = y1 + a1*sin(q(1,i)); z2 = z1;
+
+    x3 = x2; y3= y2; z3 = z2 + d2;
+
+    x4 = x3 + a2*cos(q(1,i)+q(2,i)); y4 = y3 + a2*sin(q(1,i)+q(2,i)); z4 = z3;
+
+    x5 = x4; y5 = y4; z5 = z4-q(3,i)
+    if z5>=0.4 | -z5>=0.4
+        z5=0.4;
+    else
+        z5 = z4-q(3,i);
+    end
+
+    x6 = x5; y6 = y5; z6 = z5 - d4;
+
+
+    plot3([x0,x1,x2,x3,x4,x5,x6],[y0,y1,y2,y3,y4,y5,y6],[z0,z1,z2,z3,z4,z5,z6],'linewidth',3)
+    grid on, set(gca,'fontsize',20)
+    axis([-(a1+a2)-0.1,(a1+a2)+0.1,-(a1+a2)-0.1,(a1+a2)+0.1,-0.1,(d1+d2)+0.5])
+    hold off,pause(1)
+
+    
+end
+    
